@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Just One Toot</title>
+    <style>
+      :root {
+        --background-color: black;
+        --text-color: white;
+        --text-secondary-color: #777;
+        --border-width: 1px;
+        --border-color: #777;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      *::before,
+      *::after {
+        box-sizing: inherit;
+      }
+      html {
+        color: var(--text-color);
+        background-color: var(--background-color);
+        font-size: 3vmin; 
+        font-family: -apple-system, system-ui, sans-serif;
+      }
+      .jot {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+      }
+      .jot__background {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .jot__toot {
+        display: flex;
+        flex-direction: column;
+        width: 100vw;
+        height: 100vh;
+      }
+      .jot__banner {
+        padding-top: 33%;
+        border-bottom: var(--border-width) solid var(--border-color);
+        position: relative;
+        line-height: 0;
+      }
+      @media (orientation: landscape) {
+        .jot__banner {
+          padding-top: 16.5%;
+        }
+      }
+      .jot__banner-image {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        object-fit: cover;
+      }
+      .jot__header {
+        display: flex;
+        border-bottom: var(--border-width) solid var(--border-color);
+      }
+      .jot__account {
+        flex-grow: 1;
+        display: inline-flex;
+        align-items: flex-start;
+      }
+      .jot__account-avatar {
+        line-height: 0;
+      }
+      .jot__account-avatar-image {
+        width: 4rem;
+      }
+      .jot__author,
+      .jot__meta {
+        padding: .5rem 1rem;
+      }
+      .jot__author-name {}
+      .jot__author-handle {}
+      .jot__account--reblog,
+      .jot__meta {
+        border-left: var(--border-width) solid var(--border-color);
+      }
+      .jot__author-handle,
+      .jot__meta-title {
+        display: block;
+        color: var(--text-secondary-color);
+        font-weight: normal;
+      }
+      .jot__author-name,
+      .jot__meta-count {
+        font-weight: bold;
+        font-size: larger;
+      }
+      .jot__body {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        line-height: 1.4;
+      }
+      .jot__cw img,
+      .jot__content img {
+        max-width: 1em;
+        max-height: 1em;
+        vertical-align: middle;
+      }
+      .jot__cw {
+        margin: -1rem -1rem 1rem -1rem;
+        padding: 1rem;
+        background-color: var(--border-color);
+      }
+      .jot__content p {
+        margin-bottom: 1rem;
+      }
+      .jot__content a {
+        color: inherit;
+      }
+      .jot__timestamp {
+        margin-top: auto;
+        color: var(--text-secondary-color);
+        font-size: smaller;
+      }
+      .jot__poll {
+        margin-left: -1rem;
+      }
+      .jot__poll-row {
+        position: relative;
+        margin-top: .5rem;
+      }
+      .jot__poll-bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        color: var(--text-color);
+        background-color: var(--border-color);
+        border-radius: 0 .5rem .5rem 0;
+      }
+      .jot__poll-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: .25rem 0 .25rem 1rem;
+        position: relative;
+      }
+      .jot__poll-label-title {
+        
+      }
+      .jot__poll-label-percent {
+        font-weight: bold;
+      }
+      .jot__video-wrapper,
+      .jot__audio,
+      .jot__gallery {
+        margin-bottom: 1rem;
+      }
+      .jot__video-wrapper {
+        width: 100%;
+        padding-top: 56.25%;
+        position: relative;
+      }
+      .jot__video {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .jot__audio {
+        width: 100%;
+        height: 2rem;
+      }
+      .jot__gallery {
+        display: flex;
+      }
+      .jot__gallery > * {
+        width: calc(25% - 1rem);
+        margin-right: 1rem;
+      }
+      .jot__gallery-item {
+        padding-top: 100%;
+        position: relative;
+      }
+      .jot__gallery-image {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        object-fit: cover;
+      }
+    </style>
+  </head>
+  <body>
+    
+    <div id="app" class="jot">
+      <template v-if="initialized && toot">
+        <article class="jot__toot">
+          <div class="jot__banner" v-if="toot.account.header">
+            <img class="jot__banner-image" :src="toot.account.header" alt="">
+          </div>
+          <header class="jot__header">
+            <div class="jot__account">
+              <div class="jot__account-avatar">
+                <img class="jot__account-avatar-image" :src="toot.account.avatar" :alt="toot.account.display_name">
+              </div>
+              <div class="jot__author">
+                <div class="jot__author-name">{{ toot.account.display_name }}</div>
+                <div class="jot__author-handle">{{ toot.account.acct }}</div>
+              </div>
+            </div>
+            <div class="jot__meta">
+              <strong class="jot__meta-title">Followers</strong>
+              <span class="jot__meta-count">{{ formatNumber(toot.account.followers_count) }}</span>
+            </div>
+            <div class="jot__meta">
+              <strong class="jot__meta-title">Following</strong>
+              <span class="jot__meta-count">{{ formatNumber(toot.account.following_count) }}</span>
+            </div>
+          </header>
+          <div class="jot__body">
+            
+            <div class="jot__cw" v-if="toot.spoiler_text" v-html="customEmoji(toot.spoiler_text, toot.emojis)"></div>
+            <div class="jot__content" v-if="toot.content" v-html="customEmoji(toot.content, toot.emojis)"></div>
+            
+            <template v-if="toot.poll">
+              <div class="jot__poll">
+                <div class="jot__poll-row" v-for="item in toot.poll.options">
+                  <div class="jot__poll-bar" :style="'width:' + pollPercentage(item.votes_count, toot.poll.votes_count, 5) + '%'"></div>
+                  <div class="jot__poll-label">
+                    <span class="jot__poll-label-title" v-html="customEmoji(item.title, toot.poll.emojis)"></span>
+                    <span class="jot__poll-label-percent">{{ pollPercentage(item.votes_count, toot.poll.votes_count, 1) }}%</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+            
+            <template v-if="toot.media_attachments.length > 0">
+              <template v-if="toot.media_attachments[0].type === 'video'">
+                <div class="jot__video-wrapper">
+                  <video class="jot__video" :poster="item.preview_url" controls autoplay muted loop>
+                    <source :src="item.url">
+                  </video>
+                </div>
+              </template>
+              <template v-else-if="toot.media_attachments[0].type === 'audio'">
+                <video class="jot__audio" controls loop>
+                  <source :src="item.url">
+                </video>
+              </template>
+              <template v-else>
+                <div class="jot__gallery" v-for="item in toot.media_attachments">
+                  <div>
+                    <div class="jot__gallery-item">
+                      <img class="jot__gallery-image" :src="item.url" :alt="item.description">
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </template>
+            
+            <time class="jot__timestamp" :datetime="toot.created_at">{{ formatTimestamp(toot.created_at) }}</time>
+            
+          </div>
+        </article>
+      </template>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.0/axios.min.js" integrity="sha512-bPh3uwgU5qEMipS/VOmRqynnMXGGSRv+72H/N260MQeXZIK4PG48401Bsby9Nq5P5fz7hy5UGNmC/W1Z51h2GQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      const app = new Vue({
+        el: '#app',
+        data() {
+          return {
+            initialized: false,
+            rawToot: null,
+            allToots: null,
+            index: 0
+          }
+        },
+        mounted() {
+          this.update();
+          this.play();
+        },
+        methods: {
+          update() {
+            const self = this;
+            axios.get("/toots.json")
+            .then(function(response) {
+              self.allToots = response.data;
+              self.initialized = true;
+            })
+            .catch(function(err) {
+              console.error(err);
+            })
+          },
+          progress() {
+            const totalToots = this.allToots.length - 1;
+            if(this.index + 1 > totalToots) { this.index = 0; }
+            else { this.index++; }
+          },
+          formatNumber(number) {
+            return number;
+            //return new Intl.NumberFormat("en-GB").format(number);
+          },
+          formatTimestamp(datetime) {
+            return datetime;
+            //datetime = new Date(datetime);
+            //return new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeStyle: "long" }).format(datetime);
+          },
+          customEmoji(string, emojiArray) {
+            for(var i = 0; i < emojiArray.length; i++) {
+              string = string.replace(`:${emojiArray[i].shortcode}:`, `<img src="${emojiArray[i].static_url}" alt="${emojiArray[i].shortcode}">`);
+            }
+            return string;
+          },
+          pollPercentage(itemVotes, totalVotes, decimals) {
+            if(typeof decimals === "undefined") { decimals = 1; }
+            return ((100 / totalVotes) * itemVotes).toFixed(decimals);
+          },
+          play() {
+            this.updateTimer = setInterval(this.update, 1000 * 60 * 2);
+            this.progressTimer = setInterval(this.progress, 1000 * 15);
+          }
+        },
+        computed: {
+          toot() {
+            if(!this.allToots) { return {}; }
+            const toot = this.allToots[this.index];
+            this.rawToot = toot;
+            if(toot.reblog) {
+              return toot.reblog;
+            }
+            return toot;
+          }
+        }
+      });
+    </script>
+    
+  </body>
+</html>
