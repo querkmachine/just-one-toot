@@ -340,7 +340,7 @@
             return ((100 / totalVotes) * itemVotes).toFixed(decimals);
           },
           play() {
-            this.updateTimer = setInterval(this.update, 1000 * 60 * 2);
+            this.updateTimer = setInterval(this.update, 1000 * 60 * 5);
             this.progressTimer = setInterval(this.progress, 1000 * 15);
           }
         },
