@@ -315,13 +315,19 @@
             else { this.index++; }
           },
           formatNumber(number) {
-            return number;
-            //return new Intl.NumberFormat("en-GB").format(number);
+            return new Intl.NumberFormat("en-GB").format(number);
           },
           formatTimestamp(datetime) {
-            return datetime;
-            //datetime = new Date(datetime);
-            //return new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeStyle: "long" }).format(datetime);
+            datetime = new Date(datetime);
+            return new Intl.DateTimeFormat("en-GB", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "numeric",
+              minute: "numeric",
+              second: "numeric",
+            }).format(datetime);
           },
           customEmoji(string, emojiArray) {
             for(var i = 0; i < emojiArray.length; i++) {
