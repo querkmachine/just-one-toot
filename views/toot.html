@@ -219,7 +219,7 @@
                 <img class="jot__account-avatar-image" :src="toot.account.avatar" :alt="toot.account.display_name">
               </div>
               <div class="jot__author">
-                <div class="jot__author-name">{{ toot.account.display_name }}</div>
+                <div class="jot__author-name" v-html="customEmoji(toot.account.display_name, toot.account.emojis)"></div>
                 <div class="jot__author-handle">{{ toot.account.acct }}</div>
               </div>
             </div>
