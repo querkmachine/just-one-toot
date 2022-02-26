@@ -129,11 +129,6 @@
       .jot__content a {
         color: inherit;
       }
-      .jot__timestamp {
-        margin-top: auto;
-        color: var(--text-secondary-color);
-        font-size: smaller;
-      }
       .jot__poll {
         margin-left: -1rem;
       }
@@ -203,6 +198,13 @@
         top: 0;
         left: 0;
         object-fit: contain;
+      }
+      .jot__footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: auto;
+        color: var(--text-secondary-color);
+        font-size: smaller;
       }
     </style>
   </head>
@@ -274,7 +276,10 @@
               </template>
             </template>
             
-            <time class="jot__timestamp" :datetime="toot.created_at">{{ formatTimestamp(toot.created_at) }}</time>
+            <div class="jot__footer">
+              <time class="jot__timestamp" :datetime="toot.created_at">{{ formatTimestamp(toot.created_at) }}</time>
+              <span class="jot__page">{{ pagination }}</span>
+            </div>
             
           </div>
         </article>
@@ -354,6 +359,9 @@
               return toot.reblog;
             }
             return toot;
+          },
+          pagination() {
+            return `${this.index + 1} of ${this.allToots.length}`;
           }
         }
       });
