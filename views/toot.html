@@ -28,6 +28,7 @@
         background-color: var(--background-color);
         font-size: 3vmin; 
         font-family: -apple-system, system-ui, sans-serif;
+        overflow: hidden;
       }
       .jot {
         display: flex;
@@ -35,6 +36,7 @@
         align-items: center;
         width: 100vw;
         height: 100vh;
+        position: relative;
       }
       .jot__background {
         width: 100%;
@@ -48,34 +50,55 @@
         flex-direction: column;
         width: 100vw;
         height: 100vh;
-      }
-      .jot__banner {
-        padding-top: 33%;
-        border-bottom: var(--border-width) solid var(--border-color);
-        position: relative;
-        line-height: 0;
-      }
-      @media (orientation: landscape) {
-        .jot__banner {
-          padding-top: 16.5%;
-        }
-      }
-      .jot__banner-image {
-        width: 100%;
-        height: 100%;
         position: absolute;
         top: 0;
         left: 0;
-        object-fit: cover;
+        background-color: var(--background-color);
+      }
+      .jot__toot--hidden {
+        display: none;
+      }
+      .jot__toot--prev {
+        z-index: 1;
+      }
+      .jot__toot--visible {
+        animation-name: tootAnimateIn;
+        animation-fill-mode: both;
+        animation-timing-function: ease-in;
+        animation-duration: 1s;
+        z-index: 2;
+      }
+      .jot__toot--visible .jot__header {
+        animation-name: tootHeaderAnimateIn;
+        animation-fill-mode: backwards;
+        animation-timing-function: ease-in-out;
+        animation-duration: 1s;
+        animation-delay: 1.25s;
+      }
+      @keyframes tootAnimateIn {
+        0% { transform: translateY(100%); }
+        100% { transform: translateY(0); }
+      }
+      @keyframes tootHeaderAnimateIn {
+        0% { min-height: 100vh; }
+        100% { min-height: 10rem; }
       }
       .jot__header {
         display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+        min-height: 10rem;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
         border-bottom: var(--border-width) solid var(--border-color);
       }
       .jot__account {
-        flex-grow: 1;
         display: inline-flex;
-        align-items: flex-start;
+        align-items: center;
+        padding: .5rem;
+        background-color: var(--background-color);
       }
       .jot__account-avatar {
         line-height: 0;
@@ -83,8 +106,7 @@
       .jot__account-avatar-image {
         width: 5rem;
       }
-      .jot__author,
-      .jot__meta {
+      .jot__author {
         padding: .5rem 1rem;
       }
       .jot__author-name img,
@@ -96,18 +118,15 @@
       }
       .jot__author-name {}
       .jot__author-handle {}
-      .jot__account--reblog,
-      .jot__meta {
+      .jot__account--reblog {
         border-left: var(--border-width) solid var(--border-color);
       }
-      .jot__author-handle,
-      .jot__meta-title {
+      .jot__author-handle {
         display: block;
         color: var(--text-secondary-color);
         font-weight: normal;
       }
-      .jot__author-name,
-      .jot__meta-count {
+      .jot__author-name {
         font-weight: bold;
         font-size: larger;
       }
@@ -213,12 +232,10 @@
   <body>
     
     <div id="app" class="jot">
-      <template v-if="initialized && toot">
-        <article class="jot__toot">
-          <div class="jot__banner" v-if="toot.account.header">
-            <img class="jot__banner-image" :src="toot.account.header" alt="">
-          </div>
-          <header class="jot__header">
+      <template v-if="initialized">
+        
+        <article :class="tootClasses(i)" v-for="(toot, i) in displayedToots">
+          <header class="jot__header" :style="'background-image: url(' + toot.account.header + ')'">
             <div class="jot__account">
               <div class="jot__account-avatar">
                 <img class="jot__account-avatar-image" :src="toot.account.avatar" :alt="toot.account.display_name">
@@ -227,14 +244,6 @@
                 <div class="jot__author-handle">{{ toot.account.acct }}</div>
                 <div class="jot__author-name" v-html="customEmoji(toot.account.display_name, toot.account.emojis)"></div>
               </div>
-            </div>
-            <div class="jot__meta">
-              <strong class="jot__meta-title">Followers</strong>
-              <span class="jot__meta-count">{{ formatNumber(toot.account.followers_count) }}</span>
-            </div>
-            <div class="jot__meta">
-              <strong class="jot__meta-title">Following</strong>
-              <span class="jot__meta-count">{{ formatNumber(toot.account.following_count) }}</span>
             </div>
           </header>
           <div class="jot__body">
@@ -257,14 +266,14 @@
             <template v-if="toot.media_attachments.length > 0">
               <template v-if="toot.media_attachments[0].type === 'video'">
                 <div class="jot__video-wrapper">
-                  <video class="jot__video" :poster="item.preview_url" controls autoplay muted loop>
-                    <source :src="item.url">
+                  <video class="jot__video" :poster="toot.media_attachments[0].preview_url" controls autoplay muted loop>
+                    <source :src="toot.media_attachments[0].url">
                   </video>
                 </div>
               </template>
               <template v-else-if="toot.media_attachments[0].type === 'audio'">
                 <video class="jot__audio" controls loop>
-                  <source :src="item.url">
+                  <source :src="toot.media_attachments[0].url">
                 </video>
               </template>
               <template v-else>
@@ -285,6 +294,7 @@
             
           </div>
         </article>
+        
       </template>
     </div>
     
@@ -298,7 +308,7 @@
             initialized: false,
             rawToot: null,
             allToots: null,
-            index: 0
+            currentTootIndex: 0
           }
         },
         mounted() {
@@ -319,8 +329,8 @@
           },
           progress() {
             const totalToots = this.allToots.length - 1;
-            if(this.index + 1 > totalToots) { this.index = 0; }
-            else { this.index++; }
+            if(this.currentTootIndex + 1 > totalToots) { this.currentTootIndex = 0; }
+            else { this.currentTootIndex++; }
           },
           formatNumber(number) {
             return new Intl.NumberFormat("en-GB").format(number);
@@ -350,20 +360,36 @@
           play() {
             this.updateTimer = setInterval(this.update, 1000 * 60 * 5);
             this.progressTimer = setInterval(this.progress, 1000 * 15);
+          },
+          tootClasses(index) {
+            let classes = ['jot__toot'];
+            let currentIndex = this.currentTootIndex;
+            let previousIndex = currentIndex - 1 < 0 ? this.allToots.length - 1 : currentIndex - 1;
+            
+            if(index === currentIndex) {
+              classes.push('jot__toot--visible');
+            }
+            else if (index === previousIndex) {
+              classes.push('jot__toot--prev');
+            }
+            else {
+              classes.push('jot__toot--hidden');
+            }
+            return classes.join(" ");
           }
         },
         computed: {
-          toot() {
-            if(!this.allToots) { return {}; }
-            const toot = this.allToots[this.index];
-            this.rawToot = toot;
-            if(toot.reblog) {
-              return toot.reblog;
-            }
-            return toot;
+          displayedToots() {
+            if(!this.allToots) { return []; }
+            return this.allToots.map(toot => {
+              if(toot.reblog) {
+                return toot.reblog;
+              }
+              return toot;
+            })
           },
           pagination() {
-            return `${this.index + 1} of ${this.allToots.length}`;
+            return `${this.currentTootIndex + 1} of ${this.allToots.length}`;
           }
         }
       });
